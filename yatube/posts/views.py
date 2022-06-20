@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_page
 from django.shortcuts import redirect, render, get_object_or_404
 from .forms import PostForm, CommentForm
-from .models import Post, Group, User
+from .models import Post, Group, User, Follow
 from .utils import page_list
 
 
@@ -106,3 +106,51 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
+
+@login_required
+def follow_index(request):
+    # информация о текущем пользователе доступна в переменной request.user
+    
+    post_list = Post.objects.select_related('author', 'group')
+    page_obj = page_list(post_list, request)
+    context = {'page_obj': page_obj}
+    return render(request, 'posts/follow.html', context)
+
+def follow_index(request):
+    """ Страница подписки. Показывает последние опубликованные статьи авторов,
+    на которых подписан пользователь."""
+    follows = Follow.objects.filter(user=request.user) 
+    authors = []
+    for i in follows:
+        print(i)
+        authors.extend(i.author)
+    posts = Post.objects.filter(author__in=authors)
+
+filter(author__following__user= ..
+
+
+
+if request.user.is_authenticated:
+followings = Follow.objects.select_related('author').filter(user=request.user).all()
+    for following in followings:
+        if following.author == user:
+            is_following = True
+
+@login_required
+def profile_follow(request, username):
+    # Подписаться на автора
+    follower = request.user
+    followed = User.objects.get(username=username)
+    Follow.objects.create(user=follower, author=followed)
+    return redirect('posts:profile', username=username)
+
+
+@login_required
+def profile_unfollow(request, username):
+    # Дизлайк, отписка
+    follower = request.user
+    followed = User.objects.get(username=username)
+    Follow.objects.get(user=follower, author=followed).delete()
+    return redirect('posts:index')
+#   return redirect('posts:profile', username=author)
