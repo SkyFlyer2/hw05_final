@@ -28,18 +28,11 @@ def group_posts(request, slug):
 def profile(request, username):
     """вывод списка всех записей пользователя. """
     user = get_object_or_404(User, username=username)
-    post_list = user.posts.select_related('author')
+    post_list = user.posts.select_related('author', 'group')
     page_obj = page_list(post_list, request)
     following = False
     if request.user.is_authenticated:
-#        if author.following.filter(
-#        user=request.user
-#    ).exists()
-#    followings = Follow.objects.select_related('author').filter(user=request.user).all()
-#    for following in followings:
-#        if following.author == user:
-#            following = True
-        follow = Follow.objects.filter(user=request.user, author = user)
+        follow = Follow.objects.filter(user=request.user, author=user)
         if follow.exists():
             following = True
     return render(request, 'posts/profile.html', {
@@ -120,19 +113,9 @@ def add_comment(request, post_id):
 def follow_index(request):
     # информация о текущем пользователе доступна в переменной request.user
 
-#    post_list = Follow.objects.filter(user=request.user)
-    post_list = Follow.objects.filter(author__following__user=request.user)
-    print(post_list)
-#    follows = Follow.objects.filter(user=request.user)
-#    authors = []
-#    for i in follows:
-#        print(i)
-#        authors.extend(i.author)
-#    )
-
+    post_list = Post.objects.filter(author__following__user=request.user)
     page_obj = page_list(post_list, request)
-    context = {'page_obj': page_obj}
-    return render(request, 'posts/follow.html', context)
+    return render(request, 'posts/follow.html', {'page_obj': page_obj})
 
 #def follow_index(request):
 #    """ Страница подписки. Показывает последние опубликованные статьи авторов,
@@ -153,8 +136,8 @@ def profile_follow(request, username):
     # user- подписчик,author - подписываемый
     follower = request.user
     followed = User.objects.get(username=username)
-#    is_follower = Follow.objects.filter(user=follower, author=followed)
-    if follower != followed and not Follow.objects.filter(user=request.user, author=followed).exists():
+    follower_exists = Follow.objects.filter(user=request.user, author=followed)
+    if follower != followed and not follower_exists.exists():
         Follow.objects.create(user=request.user, author=followed)
     print(username)
     print(follower)
@@ -165,12 +148,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     # Дизлайк, отписка
-    follower = request.user
     followed = User.objects.get(username=username)
     if Follow.objects.filter(user=request.user, author=followed).exists():
         Follow.objects.get(user=request.user, author=followed).delete()
-#    is_follower = Follow.objects.filter(user=follower, author=followed)
-#    if is_follower.exists():
-#        is_follower.delete()
-#    Follow.objects.get(user=follower, author=followed).delete()
     return redirect('posts:profile', username=username)
