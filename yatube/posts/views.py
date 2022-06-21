@@ -11,6 +11,7 @@ from .utils import page_list
 def index(request):
     """Главная страница."""
     post_list = Post.objects.select_related('author', 'group')
+    print(post_list)
     page_obj = page_list(post_list, request)
     return render(request, 'posts/index.html', {'page_obj': page_obj})
 
@@ -30,7 +31,7 @@ def profile(request, username):
     post_list = user.posts.select_related('author')
     page_obj = page_list(post_list, request)
     following = False
-#    if request.user.is_authenticated:
+    if request.user.is_authenticated:
 #        if author.following.filter(
 #        user=request.user
 #    ).exists()
@@ -38,9 +39,9 @@ def profile(request, username):
 #    for following in followings:
 #        if following.author == user:
 #            following = True
-    follow = Follow.objects.filter(user=request.user, author = user)
-    if follow.exists():
-        following = True
+        follow = Follow.objects.filter(user=request.user, author = user)
+        if follow.exists():
+            following = True
     return render(request, 'posts/profile.html', {
         'author': user,
         'page_obj': page_obj,
@@ -121,13 +122,13 @@ def follow_index(request):
 
 #    post_list = Follow.objects.filter(user=request.user)
     post_list = Follow.objects.filter(author__following__user=request.user)
-
+    print(post_list)
 #    follows = Follow.objects.filter(user=request.user)
 #    authors = []
 #    for i in follows:
 #        print(i)
 #        authors.extend(i.author)
-#    post_list = Post.objects.filter(author__in=authors)
+#    )
 
     page_obj = page_list(post_list, request)
     context = {'page_obj': page_obj}
@@ -152,9 +153,9 @@ def profile_follow(request, username):
     # user- подписчик,author - подписываемый
     follower = request.user
     followed = User.objects.get(username=username)
-    is_follower = Follow.objects.filter(user=follower, author=followed)
-    if follower != followed and not is_follower.exists():
-        Follow.objects.create(user=follower, author=followed)
+#    is_follower = Follow.objects.filter(user=follower, author=followed)
+    if follower != followed and not Follow.objects.filter(user=request.user, author=followed).exists():
+        Follow.objects.create(user=request.user, author=followed)
     print(username)
     print(follower)
     print(followed)
@@ -166,8 +167,10 @@ def profile_unfollow(request, username):
     # Дизлайк, отписка
     follower = request.user
     followed = User.objects.get(username=username)
-    is_follower = Follow.objects.filter(user=follower, author=followed)
-    if is_follower.exists():
-        is_follower.delete()
+    if Follow.objects.filter(user=request.user, author=followed).exists():
+        Follow.objects.get(user=request.user, author=followed).delete()
+#    is_follower = Follow.objects.filter(user=follower, author=followed)
+#    if is_follower.exists():
+#        is_follower.delete()
 #    Follow.objects.get(user=follower, author=followed).delete()
     return redirect('posts:profile', username=username)
