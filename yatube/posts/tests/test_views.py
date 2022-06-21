@@ -117,6 +117,8 @@ class GroupPagesTests(TestCase):
         object = response.context['post_detail']
         self.assertEqual(object.text, 'Отдельная запись')
         self.assertTrue(object.image, 'posts/small.gif')
+#        print(response.content.decode())
+
 
     def test_post_edit_page_show_correct_context(self):
         """Шаблон post_edit сформирован с правильным контекстом."""
@@ -313,7 +315,7 @@ class PaginatorViewsTest(TestCase):
                 )
 
 
-class MainPageCacheTest(TestCase):
+class IndexPageCacheTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -354,3 +356,29 @@ class MainPageCacheTest(TestCase):
         )
         self.assertNotEqual(response_one_post.content, response.content)
 #        print(response.content.decode())
+
+
+class FollowServiceTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='testuser')
+        cls.group = Group.objects.create(
+            title='Тестовая группа',
+            slug='test_slug',
+            description='Тестовое описание'
+        )
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Отдельная запись',
+            group=cls.group,
+        )
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+        self.authorized_client2 = Client()
+        self.authorized_client.force_login(self.user)
+
+        cache.clear()
