@@ -10,7 +10,6 @@ from .utils import page_list
 @cache_page(20, key_prefix='index_page')
 def index(request):
     """Главная страница."""
-
     post_list = Post.objects.select_related('author', 'group')
     page_obj = page_list(post_list, request)
     return render(request, 'posts/index.html', {'page_obj': page_obj})
@@ -18,7 +17,6 @@ def index(request):
 
 def group_posts(request, slug):
     """вывод записей одной из групп. """
-
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.select_related('author', 'group')
     page_obj = page_list(posts, request)
@@ -28,7 +26,6 @@ def group_posts(request, slug):
 
 def profile(request, username):
     """вывод списка всех записей пользователя. """
-
     user = get_object_or_404(User, username=username)
     post_list = user.posts.select_related('author')
     page_obj = page_list(post_list, request)
@@ -53,7 +50,6 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     """подробная информация о записи. """
-
     post = get_object_or_404(Post, pk=post_id)
     form_comment = CommentForm(request.POST or None)
     comments = post.comments.all()
@@ -70,7 +66,6 @@ def post_detail(request, post_id):
 @login_required
 def post_create(request):
     """добавление новой записи в базу. """
-
     form = PostForm(request.POST or None)
     if request.method == 'POST':
         if form.is_valid():
@@ -84,7 +79,6 @@ def post_create(request):
 @login_required
 def post_edit(request, post_id):
     """редактирование записи. """
-
     post = get_object_or_404(Post, pk=post_id)
     form = PostForm(
         request.POST or None,
@@ -111,7 +105,6 @@ def post_edit(request, post_id):
 @login_required
 def add_comment(request, post_id):
     """добавление комментария к записи"""
-
     post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST or None)
     if form.is_valid():
@@ -127,7 +120,7 @@ def follow_index(request):
     # информация о текущем пользователе доступна в переменной request.user
 
 #    post_list = Follow.objects.filter(user=request.user)
-    post_list = Follow.objects.filter(author__following__user=request.user).select_related('user', 'author')
+    post_list = Follow.objects.filter(author__following__user=request.user)
 
 #    follows = Follow.objects.filter(user=request.user)
 #    authors = []
@@ -156,10 +149,16 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     # Подписаться на автора
+    # user- подписчик,author - подписываемый
     follower = request.user
     followed = User.objects.get(username=username)
-    Follow.objects.create(user=follower, author=followed)
-    return redirect('posts:profile', username=followed)
+    is_follower = Follow.objects.filter(user=follower, author=followed)
+    if follower != followed and not is_follower.exists():
+        Follow.objects.create(user=follower, author=followed)
+    print(username)
+    print(follower)
+    print(followed)
+    return redirect('posts:profile', username=username)
 
 
 @login_required
@@ -167,5 +166,8 @@ def profile_unfollow(request, username):
     # Дизлайк, отписка
     follower = request.user
     followed = User.objects.get(username=username)
-    Follow.objects.get(user=follower, author=followed).delete()
-    return redirect('posts:profile', username=followed)
+    is_follower = Follow.objects.filter(user=follower, author=followed)
+    if is_follower.exists():
+        is_follower.delete()
+#    Follow.objects.get(user=follower, author=followed).delete()
+    return redirect('posts:profile', username=username)
