@@ -31,10 +31,19 @@ def profile(request, username):
     user = get_object_or_404(User, username=username)
     post_list = user.posts.select_related('author')
     page_obj = page_list(post_list, request)
+    following = False
+    if request.user.is_authenticated:
+        followings = Follow.objects.select_related('author').filter(user=request.user).all()
+        for following in followings:
+            if following.author == user:
+                following = True
     return render(request, 'posts/profile.html', {
         'author': user,
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'following': following,
     })
+
+
 
 
 def post_detail(request, post_id):
@@ -111,31 +120,24 @@ def add_comment(request, post_id):
 @login_required
 def follow_index(request):
     # информация о текущем пользователе доступна в переменной request.user
-    
-    post_list = Post.objects.select_related('author', 'group')
+
+    post_list = Follow.objects.filter(filter(author__following__user='following'))
     page_obj = page_list(post_list, request)
     context = {'page_obj': page_obj}
     return render(request, 'posts/follow.html', context)
 
-def follow_index(request):
-    """ Страница подписки. Показывает последние опубликованные статьи авторов,
-    на которых подписан пользователь."""
-    follows = Follow.objects.filter(user=request.user) 
-    authors = []
-    for i in follows:
-        print(i)
-        authors.extend(i.author)
-    posts = Post.objects.filter(author__in=authors)
+#def follow_index(request):
+#    """ Страница подписки. Показывает последние опубликованные статьи авторов,
+#    на которых подписан пользователь."""
+#    follows = Follow.objects.filter(user=request.user)
+#    authors = []
+#    for i in follows:
+#        print(i)
+#        authors.extend(i.author)
+#    posts = Post.objects.filter(author__in=authors)
 
-filter(author__following__user= ..
+#filter(author__following__user= ..
 
-
-
-if request.user.is_authenticated:
-followings = Follow.objects.select_related('author').filter(user=request.user).all()
-    for following in followings:
-        if following.author == user:
-            is_following = True
 
 @login_required
 def profile_follow(request, username):
@@ -152,5 +154,5 @@ def profile_unfollow(request, username):
     follower = request.user
     followed = User.objects.get(username=username)
     Follow.objects.get(user=follower, author=followed).delete()
-    return redirect('posts:index')
-#   return redirect('posts:profile', username=author)
+#    return redirect('posts:index')
+    return redirect('posts:profile', username=username)
