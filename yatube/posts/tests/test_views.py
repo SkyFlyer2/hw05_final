@@ -406,7 +406,7 @@ class FollowServiceTest(TestCase):
         на другого автора"""
 
         #response = self.authorized_client.get(reverse('posts:follow_index', kwargs={'username': 'testuser'}))
-        print(reverse('posts:follow_index', kwargs={'username': 'testuser'}))
+        print(reverse('posts:follow_index', kwargs={'username': self.user1}))
         #print(response)
         first_object = response.context['page_obj'][0]
 #        print(response.content.decode())
