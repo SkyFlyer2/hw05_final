@@ -9,7 +9,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django import forms
 from posts.forms import PostForm
-from posts.models import Post, Group, Comment
+from posts.models import Post, Group, Comment, Follow
 
 User = get_user_model()
 
@@ -288,6 +288,7 @@ class PaginatorViewsTest(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}),
             reverse('posts:profile', kwargs={'username': 'testuser'}),
         }
+        cache.clear()
 
     def test_first_page_contains_ten_records(self):
         """ тестируем работу Paginator. Проверка вывода 10 записей"""
@@ -397,16 +398,45 @@ class FollowServiceTest(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-
         cache.clear()
 
-    def test_auth_user_can_follow_second_user(self):
+    def test_auth_user_can_follow_author(self):
         """
         Проверка возможности подписки авторизованного пользователя
         на другого автора"""
+        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        # изначально нет подписок
+        self.assertEqual(Follow.objects.count(), 0)
+        self.authorized_client.get(url_follow)
+        # сейчас должна появиться одна подписка
+        self.assertEqual(Follow.objects.count(), 1)
 
-        #response = self.authorized_client.get(reverse('posts:follow_index', kwargs={'username': 'testuser'}))
-        print(reverse('posts:follow_index', kwargs={'username': self.user1}))
-        #print(response)
-        first_object = response.context['page_obj'][0]
-#        print(response.content.decode())
+        #first_object = response.context['page_obj'][0]
+#       print(response.content.decode())
+
+    def test_auth_user_can_unfollow_author(self):
+        """
+        Проверка возможности отписки авторизованного пользователя
+        от автора"""
+        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        url_unfollow = reverse('posts:profile_unfollow', kwargs={'username': self.user2})
+        # сделаем подписку
+        self.authorized_client.get(url_follow)
+        self.assertEqual(Follow.objects.count(), 1)
+        self.authorized_client.get(url_follow)
+        # отписаться
+        self.authorized_client.get(url_unfollow)
+        self.assertEqual(Follow.objects.count(), 0)
+
+    def test_guest_user_cant_follow_author(self):
+        """Гость не может подписаться на автора"""
+        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        url_login = f'/auth/login/?next={url_follow}'
+        # изначально нет подписок
+        self.assertEqual(Follow.objects.count(), 0)
+        response = self.guest_client.get(url_follow)
+        # не должно появиться подписок
+        self.assertEqual(Follow.objects.count(), 0)
+        # будет редирект на логин
+        response = self.guest_client.get(url_follow, follow=True)
+        self.assertRedirects(response, url_login)

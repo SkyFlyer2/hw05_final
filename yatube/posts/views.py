@@ -139,9 +139,9 @@ def profile_follow(request, username):
     follower_exists = Follow.objects.filter(user=request.user, author=followed)
     if follower != followed and not follower_exists.exists():
         Follow.objects.create(user=request.user, author=followed)
-    print(username)
-    print(follower)
-    print(followed)
+#    print(username)
+#    print(follower)
+#    print(followed)
     return redirect('posts:profile', username=username)
 
 
