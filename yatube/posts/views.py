@@ -109,43 +109,26 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    # информация о текущем пользователе доступна в переменной request.user
-
     post_list = Post.objects.filter(author__following__user=request.user)
     page_obj = page_list(post_list, request)
     return render(request, 'posts/follow.html', {'page_obj': page_obj})
 
-#def follow_index(request):
-#    """ Страница подписки. Показывает последние опубликованные статьи авторов,
-#    на которых подписан пользователь."""
-#    follows = Follow.objects.filter(user=request.user)
-#    authors = []
-#    for i in follows:
-#        print(i)
-#        authors.extend(i.author)
-#    posts = Post.objects.filter(author__in=authors)
-
-# filter(author__following__user= ..
-
 
 @login_required
 def profile_follow(request, username):
-    # Подписаться на автора
+    """Подписаться на автора"""
     # user- подписчик,author - подписываемый
     follower = request.user
     followed = User.objects.get(username=username)
     follower_exists = Follow.objects.filter(user=request.user, author=followed)
     if follower != followed and not follower_exists.exists():
         Follow.objects.create(user=request.user, author=followed)
-#    print(username)
-#    print(follower)
-#    print(followed)
     return redirect('posts:profile', username=username)
 
 
 @login_required
 def profile_unfollow(request, username):
-    # Дизлайк, отписка
+    """отписка от автора"""
     followed = User.objects.get(username=username)
     if Follow.objects.filter(user=request.user, author=followed).exists():
         Follow.objects.get(user=request.user, author=followed).delete()

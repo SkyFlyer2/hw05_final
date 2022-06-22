@@ -31,7 +31,6 @@ class PostCreateFormTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(username='testuser')
-        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
@@ -71,14 +70,6 @@ class PostCreateFormTests(TestCase):
                 image__isnull=False,
             ).exists()
         )
-# проверим ответ для гостя
-        response_guest = self.guest_client.post(
-            reverse('posts:post_create'),
-            data=form_data,
-            follow=True
-        )
-        self.assertRedirects(
-            response_guest, '/auth/login/?next=/create/')
 
     def test_edit_post(self):
         """Проверка редактирования записи через форму"""
@@ -114,3 +105,18 @@ class PostCreateFormTests(TestCase):
         )
         self.assertRedirects(
             response_guest, f'/auth/login/?next=/posts/{self.post.id}/edit/')
+
+    def test_guest_cant_create_post(self):
+        """Гость не может создать пост"""
+        self.guest_client = Client()
+        form_data = {
+            'group': self.group.id,
+            'text': 'Тестовый текст',
+        }
+        response_guest = self.guest_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response_guest, '/auth/login/?next=/create/')
