@@ -97,14 +97,6 @@ class PostCreateFormTests(TestCase):
                 text='Тестовый текст после правки'
             ).exists()
         )
-        response_guest = self.guest_client.post(
-            reverse('posts:post_edit', kwargs={
-                'post_id': self.post.id}),
-            data=form_data,
-            follow=True
-        )
-        self.assertRedirects(
-            response_guest, f'/auth/login/?next=/posts/{self.post.id}/edit/')
 
     def test_guest_cant_create_post(self):
         """Гость не может создать пост"""
@@ -120,3 +112,24 @@ class PostCreateFormTests(TestCase):
         )
         self.assertRedirects(
             response_guest, '/auth/login/?next=/create/')
+
+    def test_guest_cant_edit_post(self):
+        """Гость не может создать пост"""
+        self.guest_client = Client()
+        self.post = Post.objects.create(
+            author=self.user,
+            text='Отдельная запись',
+            group=self.group
+        )
+        form_data = {
+            'group': self.group.id,
+            'text': 'Тестовый текст после правки',
+        }
+        response_guest = self.guest_client.post(
+            reverse('posts:post_edit', kwargs={
+                'post_id': self.post.id}),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(
+            response_guest, f'/auth/login/?next=/posts/{self.post.id}/edit/')

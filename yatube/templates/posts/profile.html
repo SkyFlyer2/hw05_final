@@ -21,7 +21,7 @@
       </a>
    {% endif %}  
   {% for post in page_obj %}
-      {% include 'includes/posts_card.html' %}
+      {% include 'includes/posts_card.html' with show_all_posts=False show_posts_group=True %}
   {% endfor %}
   <!-- под последним постом нет линии -->
   {% include 'posts/paginator.html' %}

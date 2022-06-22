@@ -19,8 +19,11 @@ def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.select_related('author', 'group')
     page_obj = page_list(posts, request)
-    return render(request, 'posts/group_list.html', {'group': group,
-                                                     'page_obj': page_obj})
+    return render(
+        request,
+        'posts/group_list.html',
+        {'group': group, 'page_obj': page_obj, }
+    )
 
 
 def profile(request, username):
