@@ -80,7 +80,7 @@ class GroupPagesTests(TestCase):
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
-#
+
 # проверяем контекст
     def test_index_page_show_correct_context(self):
         """Шаблон главной страницы с правильным контекстом"""
@@ -88,7 +88,7 @@ class GroupPagesTests(TestCase):
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.text, 'Отдельная запись')
         self.assertTrue(first_object.image, 'posts/small.gif')
-#
+
     def test_group_list_page_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
 
@@ -98,7 +98,7 @@ class GroupPagesTests(TestCase):
         self.assertEqual(first_object.group.title, self.group.title)
         self.assertEqual(first_object.text, 'Отдельная запись')
         self.assertTrue(first_object.image, 'posts/small.gif')
-#
+
     def test_profile_page_show_correct_context(self):
         """Страница профиля с правильным контекстом"""
 
@@ -108,7 +108,7 @@ class GroupPagesTests(TestCase):
         self.assertEqual(first_object.text, self.post.text)
         self.assertEqual(first_object.author, self.user)
         self.assertTrue(first_object.image, 'posts/small.gif')
-#
+
     def test_post_detail_page_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
 
@@ -117,8 +117,6 @@ class GroupPagesTests(TestCase):
         object = response.context['post_detail']
         self.assertEqual(object.text, 'Отдельная запись')
         self.assertTrue(object.image, 'posts/small.gif')
-#        print(response.content.decode())
-
 
     def test_post_edit_page_show_correct_context(self):
         """Шаблон post_edit сформирован с правильным контекстом."""
@@ -260,7 +258,10 @@ class GroupPagesTests(TestCase):
                 kwargs={'post_id': 1}
             ),
         )
-        self.assertEqual(response.context.get('comments')[0].text, form_data['text'])
+        self.assertEqual(response.context.get(
+            'comments')[0].text,
+            form_data['text']
+        )
 
 
 class PaginatorViewsTest(TestCase):
@@ -385,31 +386,35 @@ class FollowServiceTest(TestCase):
         Post.objects.bulk_create(list_posts)
 
     def setUp(self):
-        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        cache.clear()
 
     def test_auth_user_can_follow_author(self):
         """
         Проверка возможности подписки авторизованного пользователя
         на другого автора"""
-        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        url_follow = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user2}
+        )
         # изначально нет подписок
         self.assertEqual(Follow.objects.count(), 0)
         self.authorized_client.get(url_follow)
         # сейчас должна появиться одна подписка
         self.assertEqual(Follow.objects.count(), 1)
 
-        #first_object = response.context['page_obj'][0]
-#       print(response.content.decode())
-
     def test_auth_user_can_unfollow_author(self):
         """
         Проверка возможности отписки авторизованного пользователя
         от автора"""
-        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
-        url_unfollow = reverse('posts:profile_unfollow', kwargs={'username': self.user2})
+        url_follow = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user2}
+        )
+        url_unfollow = reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.user2}
+        )
         self.authorized_client.get(url_follow)
         self.assertEqual(Follow.objects.count(), 1)
         self.authorized_client.get(url_follow)
@@ -418,7 +423,11 @@ class FollowServiceTest(TestCase):
 
     def test_guest_user_cant_follow_author(self):
         """Гость не может подписаться на автора"""
-        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        self.guest_client = Client()
+        url_follow = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user2}
+        )
         url_login = f'/auth/login/?next={url_follow}'
         # изначально нет подписок
         self.assertEqual(Follow.objects.count(), 0)
@@ -433,7 +442,10 @@ class FollowServiceTest(TestCase):
         """
         После подписки на автора в ленте подписавшегося должна
         появиться запись"""
-        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        url_follow = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user2}
+        )
         new_post = 'Отдельная запись от testuser2'
         self.authorized_client.get(url_follow)
         Post.objects.create(
@@ -443,9 +455,7 @@ class FollowServiceTest(TestCase):
         )
         response = self.authorized_client.get(reverse('posts:follow_index'))
         obj = response.context['page_obj']
-        print(len(obj.object_list))
-        print(obj.paginator.count)
-        self.assertEqual(obj.object_list[0].text, new_post)
+        self.assertEqual(obj.paginator.object_list[0].text, new_post)
 
     def test_no_follow_auth_user_not_see_new_posts_from_author(self):
         """Тот, кто не подписался, не увидит новых записей от автора"""
@@ -458,10 +468,6 @@ class FollowServiceTest(TestCase):
         self.user3 = User.objects.create_user(username='testuser3')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user3)
-#        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
-#        self.authorized_client.get(url_follow)
-
         response = self.authorized_client.get(reverse('posts:follow_index'))
-        obj = response.context['page_obj']
         # список должен быть пуст, т.к. подписок у нас нет
-        self.assertEqual(obj.paginator.count, 0)
+        self.assertEqual(len(response.context['page_obj']), 0)
