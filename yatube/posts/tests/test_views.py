@@ -442,7 +442,12 @@ class FollowServiceTest(TestCase):
             group=self.group,
         )
         response_follow = self.authorized_client.get(reverse('posts:follow_index'))
-        print(response_follow.content.decode())
+        obj = response_follow.context['page_obj']
+        for post in obj.object_list:
+            print(post.text)
+
+        print(obj)
+#        print(response_follow.content.decode())
 
         #self.assertEqual(response_one_post.content, response_cached.content)
 
