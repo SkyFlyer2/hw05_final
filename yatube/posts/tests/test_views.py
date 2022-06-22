@@ -370,16 +370,6 @@ class FollowServiceTest(TestCase):
             slug='test_slug',
             description='Тестовое описание'
         )
-        cls.post = Post.objects.create(
-            author=cls.user,
-            text='Отдельная запись от testuser',
-            group=cls.group,
-        )
-        cls.post2 = Post.objects.create(
-            author=cls.user2,
-            text='Отдельная запись от testuser2',
-            group=cls.group,
-        )
         list_posts = [Post(
             text=f'Новая запись от {cls.user} № {i}',
             author=cls.user,
@@ -420,11 +410,9 @@ class FollowServiceTest(TestCase):
         от автора"""
         url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
         url_unfollow = reverse('posts:profile_unfollow', kwargs={'username': self.user2})
-        # сделаем подписку
         self.authorized_client.get(url_follow)
         self.assertEqual(Follow.objects.count(), 1)
         self.authorized_client.get(url_follow)
-        # отписаться
         self.authorized_client.get(url_unfollow)
         self.assertEqual(Follow.objects.count(), 0)
 
@@ -440,3 +428,34 @@ class FollowServiceTest(TestCase):
         # будет редирект на логин
         response = self.guest_client.get(url_follow, follow=True)
         self.assertRedirects(response, url_login)
+
+    def test_after_follow_auth_user_get_new_posts_from_author(self):
+        """
+        После подписки на автора в ленте подписавшегося должна
+        появиться запись"""
+        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        self.authorized_client.get(url_follow)
+        response = self.authorized_client.get(reverse('posts:index'))
+        Post.objects.create(
+            author=self.user2,
+            text='Отдельная запись от testuser2',
+            group=self.group,
+        )
+        response_follow = self.authorized_client.get(reverse('posts:follow_index'))
+        print(response_follow.content.decode())
+
+        #self.assertEqual(response_one_post.content, response_cached.content)
+
+
+        # сейчас должна появиться одна подписка
+        self.assertEqual(Follow.objects.count(), 1)
+
+        #first_object = response.context['page_obj'][0]
+#       print(response.content.decode())
+
+
+#        cls.post = Post.objects.create(
+#            author=cls.user,
+#            text='Отдельная запись от testuser',
+#            group=cls.group,
+#        )
