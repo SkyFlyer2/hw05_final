@@ -11,7 +11,6 @@ from .utils import page_list
 def index(request):
     """Главная страница."""
     post_list = Post.objects.select_related('author', 'group')
-    print(post_list)
     page_obj = page_list(post_list, request)
     return render(request, 'posts/index.html', {'page_obj': page_obj})
 

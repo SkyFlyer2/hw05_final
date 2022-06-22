@@ -429,38 +429,39 @@ class FollowServiceTest(TestCase):
         response = self.guest_client.get(url_follow, follow=True)
         self.assertRedirects(response, url_login)
 
-    def test_after_follow_auth_user_get_new_posts_from_author(self):
+    def test_after_follow_auth_user_see_new_posts_from_author(self):
         """
         После подписки на автора в ленте подписавшегося должна
         появиться запись"""
         url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+        new_post = 'Отдельная запись от testuser2'
         self.authorized_client.get(url_follow)
-        response = self.authorized_client.get(reverse('posts:index'))
         Post.objects.create(
             author=self.user2,
-            text='Отдельная запись от testuser2',
+            text=new_post,
             group=self.group,
         )
-        response_follow = self.authorized_client.get(reverse('posts:follow_index'))
-        obj = response_follow.context['page_obj']
-        for post in obj.object_list:
-            print(post.text)
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        obj = response.context['page_obj']
+        print(len(obj.object_list))
+        print(obj.paginator.count)
+        self.assertEqual(obj.object_list[0].text, new_post)
 
-        print(obj)
-#        print(response_follow.content.decode())
+    def test_no_follow_auth_user_not_see_new_posts_from_author(self):
+        """Тот, кто не подписался, не увидит новых записей от автора"""
+        new_post = 'Отдельная запись от testuser2'
+        Post.objects.create(
+            author=self.user2,
+            text=new_post,
+            group=self.group,
+        )
+        self.user3 = User.objects.create_user(username='testuser3')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user3)
+#        url_follow = reverse('posts:profile_follow', kwargs={'username': self.user2})
+#        self.authorized_client.get(url_follow)
 
-        #self.assertEqual(response_one_post.content, response_cached.content)
-
-
-        # сейчас должна появиться одна подписка
-        self.assertEqual(Follow.objects.count(), 1)
-
-        #first_object = response.context['page_obj'][0]
-#       print(response.content.decode())
-
-
-#        cls.post = Post.objects.create(
-#            author=cls.user,
-#            text='Отдельная запись от testuser',
-#            group=cls.group,
-#        )
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        obj = response.context['page_obj']
+        # список должен быть пуст, т.к. подписок у нас нет
+        self.assertEqual(obj.paginator.count, 0)
