@@ -363,22 +363,50 @@ class FollowServiceTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='testuser')
+        cls.user2 = User.objects.create_user(username='testuser2')
         cls.group = Group.objects.create(
-            title='Тестовая группа',
+            title='Тестовая группа1',
             slug='test_slug',
             description='Тестовое описание'
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text='Отдельная запись',
+            text='Отдельная запись от testuser',
             group=cls.group,
         )
+        cls.post2 = Post.objects.create(
+            author=cls.user2,
+            text='Отдельная запись от testuser2',
+            group=cls.group,
+        )
+        list_posts = [Post(
+            text=f'Новая запись от {cls.user} № {i}',
+            author=cls.user,
+            group=cls.group,
+        ) for i in range(4)]
+        Post.objects.bulk_create(list_posts)
+
+        list_posts = [Post(
+            text=f'Новая запись от {cls.user2} № {i}',
+            author=cls.user2,
+            group=cls.group,
+        ) for i in range(4)]
+        Post.objects.bulk_create(list_posts)
 
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        self.authorized_client2 = Client()
-        self.authorized_client.force_login(self.user)
 
         cache.clear()
+
+    def test_auth_user_can_follow_second_user(self):
+        """
+        Проверка возможности подписки авторизованного пользователя
+        на другого автора"""
+
+        #response = self.authorized_client.get(reverse('posts:follow_index', kwargs={'username': 'testuser'}))
+        print(reverse('posts:follow_index', kwargs={'username': 'testuser'}))
+        #print(response)
+        first_object = response.context['page_obj'][0]
+#        print(response.content.decode())
