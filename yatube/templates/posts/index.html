@@ -3,12 +3,9 @@
 {% block content %}
 {% include 'includes/switcher.html' %}
 {% load thumbnail %}
-<!--{% load cache %}
-{% cache 20 index_page %}-->
 <h1>Последние обновления на сайте</h1>
   {% for post in page_obj %}
       {% include 'includes/posts_card.html' %}
   {% endfor %}
-  {% endcache %}
   {% include 'posts/paginator.html' %}
 {% endblock %}

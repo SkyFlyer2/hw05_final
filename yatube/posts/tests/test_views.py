@@ -3,7 +3,6 @@ import tempfile
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -73,9 +72,9 @@ class GroupPagesTests(TestCase):
                 'post_id': 1}): 'posts/post_detail.html',
             reverse('posts:post_edit', kwargs={
                 'post_id': 1}): 'posts/create_post.html',
-            reverse('posts:post_create'): 'posts/create_post.html'
+            reverse('posts:post_create'): 'posts/create_post.html',
+            reverse('posts:follow_index'): 'posts/follow.html',
         }
-
         for reverse_name, template, in self.templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
@@ -225,10 +224,6 @@ class GroupPagesTests(TestCase):
             comment_text['text']
         )
 
-#        print(Comment.objects.get(post=self.post).text)
-#        print(response.context.get('comments')[0].text)
-#        post = Post.objects.last()
-
     def test_guest_can_not_add_comment(self):
         """Гость не может добавлять комментарии"""
         self.guest_client = Client()
@@ -341,7 +336,6 @@ class IndexPageCacheTest(TestCase):
 
     def test_index_page_cache(self):
         """Проверка кеширования главной страницы"""
-        key = make_template_fragment_key('index_page')
         response_one_post = self.authorized_client.get(reverse('posts:index'))
         Post.objects.create(
             author=self.user,
@@ -351,13 +345,11 @@ class IndexPageCacheTest(TestCase):
         response_cached = self.authorized_client.get(reverse('posts:index'))
         # страница не изменилась
         self.assertEqual(response_one_post.content, response_cached.content)
-#        cache.delete(key)
         cache.clear()
         response = self.authorized_client.get(
             reverse('posts:index')
         )
         self.assertNotEqual(response_one_post.content, response.content)
-#        print(response.content.decode())
 
 
 class FollowServiceTest(TestCase):
