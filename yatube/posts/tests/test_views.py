@@ -58,7 +58,7 @@ class GroupPagesTests(TestCase):
         self.authorized_client.force_login(self.user)
         cache.clear()
 
-# Проверяем используемые шаблоны
+    # Проверяем используемые шаблоны
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
 
@@ -126,6 +126,7 @@ class GroupPagesTests(TestCase):
         form_fields = (
             ('text', forms.fields.CharField),
             ('group', forms.fields.ChoiceField),
+            ('image', forms.fields.ImageField),
         )
         for value, expected in form_fields:
             with self.subTest(value=value):
@@ -137,14 +138,13 @@ class GroupPagesTests(TestCase):
 
     def test_post_create_page_show_correct_context(self):
         """Шаблон post_create сформирован с правильным контекстом."""
-
         response = self.authorized_client.get(
             reverse('posts:post_create'))
-        form_fields = {
-            'text': forms.fields.CharField,
-            'group': forms.fields.ChoiceField,
-        }
-        for value, expected in form_fields.items():
+        form_fields = (
+            ('text', forms.fields.CharField),
+            ('group', forms.fields.ChoiceField),
+        )
+        for value, expected in form_fields:
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
@@ -153,7 +153,6 @@ class GroupPagesTests(TestCase):
 # дополнительная проверка при создании поста
     def test_post_on_main_page(self):
         """Проверяем что новая запись группы появилась на главной странице"""
-
         self.group2 = Group.objects.create(
             title='Тестовая группа 2',
             slug='test_slug2',
@@ -171,7 +170,6 @@ class GroupPagesTests(TestCase):
 
     def test_post_second_group_list_page(self):
         """Проверяем что новая запись группы появилась на странице группы"""
-
         self.group2 = Group.objects.create(
             title='Тестовая группа 2',
             slug='test_slug2',
@@ -191,7 +189,6 @@ class GroupPagesTests(TestCase):
     def test_post_profile_page(self):
         """Проверяем что новая запись группы появилась в профиле
            пользователя"""
-
         self.group2 = Group.objects.create(
             title='Тестовая группа 2',
             slug='test_slug2',
@@ -209,7 +206,7 @@ class GroupPagesTests(TestCase):
         self.assertEqual(first_object.author, self.user)
         self.assertEqual(first_object.group, self.group2)
 
-# тестирование комментариев
+    # тестирование комментариев
     def test_registered_user_add_comment(self):
         """Комментировать пост может только зарегистрированный пользователь"""
         comment_text = {'text': 'Комментарий от auth-user'}
@@ -389,10 +386,7 @@ class FollowServiceTest(TestCase):
             'posts:profile_follow',
             kwargs={'username': self.user2}
         )
-        # изначально нет подписок
-        self.assertEqual(Follow.objects.count(), 0)
         self.authorized_client.get(url_follow)
-        # сейчас должна появиться одна подписка
         self.assertEqual(Follow.objects.count(), 1)
 
     def test_auth_user_can_unfollow_author(self):
@@ -421,12 +415,9 @@ class FollowServiceTest(TestCase):
             kwargs={'username': self.user2}
         )
         url_login = f'/auth/login/?next={url_follow}'
-        # изначально нет подписок
-        self.assertEqual(Follow.objects.count(), 0)
         response = self.guest_client.get(url_follow)
-        # не должно появиться подписок
         self.assertEqual(Follow.objects.count(), 0)
-        # будет редирект на логин
+        # редирект на логин
         response = self.guest_client.get(url_follow, follow=True)
         self.assertRedirects(response, url_login)
 
@@ -463,3 +454,12 @@ class FollowServiceTest(TestCase):
         response = self.authorized_client.get(reverse('posts:follow_index'))
         # список должен быть пуст, т.к. подписок у нас нет
         self.assertEqual(len(response.context['page_obj']), 0)
+
+    def test_auth_user_cant_follow_himself(self):
+        """Нельзя подписаться на самого себя"""
+        url_follow = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user}
+        )
+        self.authorized_client.get(url_follow)
+        self.assertEqual(Follow.objects.count(), 0)

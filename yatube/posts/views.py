@@ -120,7 +120,6 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     """Подписаться на автора"""
-    # user- подписчик,author - подписываемый
     follower = request.user
     followed = User.objects.get(username=username)
     follower_exists = Follow.objects.filter(user=request.user, author=followed)
