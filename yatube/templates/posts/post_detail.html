@@ -35,11 +35,11 @@
       <img class="card-img my-2" src="{{ im.url }}">
     {% endthumbnail %}
       <p>{{ post_detail.text }}</p>
-      {%include 'posts/comments.html' %}
       {% if post_detail.author == request.user %}
       <a class="btn btn-primary" href="{% url 'posts:post_edit' post_detail.id %}"> 
         редактировать запись
       </a>
+      {%include 'posts/comments.html' %}
       {% endif %}
     </article>
   {% include 'posts/paginator.html' %}
