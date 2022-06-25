@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.cache import cache
 from posts.models import Post, Group
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -33,6 +34,7 @@ class PostCreateFormTests(TestCase):
         self.user = User.objects.create_user(username='testuser')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def test_create_post(self):
         """Создание записи посредством валидной формы"""
@@ -105,16 +107,20 @@ class PostCreateFormTests(TestCase):
             'group': self.group.id,
             'text': 'Тестовый текст',
         }
+        url_create_post = reverse('posts:post_create')
         response_guest = self.guest_client.post(
-            reverse('posts:post_create'),
+            url_create_post,
             data=form_data,
             follow=True
         )
+        self.assertEqual(Post.objects.count(), 0)
         self.assertRedirects(
-            response_guest, '/auth/login/?next=/create/')
+            response_guest,
+            f'/auth/login/?next={url_create_post}'
+        )
 
     def test_guest_cant_edit_post(self):
-        """Гость не может создать пост"""
+        """Гость не может редактировать пост"""
         self.guest_client = Client()
         self.post = Post.objects.create(
             author=self.user,
@@ -131,5 +137,6 @@ class PostCreateFormTests(TestCase):
             data=form_data,
             follow=True
         )
+#1 добавить проверку поста в базе
         self.assertRedirects(
             response_guest, f'/auth/login/?next=/posts/{self.post.id}/edit/')

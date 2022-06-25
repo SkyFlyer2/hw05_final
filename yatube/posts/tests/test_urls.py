@@ -23,16 +23,16 @@ class PostURLTests(TestCase):
             text='Тестовый текст, который не должен быть слишком коротким',
             group=cls.group
         )
-        post_id = 1
+        cls.post_id = 1
         cls.guest_user_urls = (
             ('/', 'posts/index.html'),
             ('/group/test_slug/', 'posts/group_list.html'),
             ('/profile/testuser/', 'posts/profile.html'),
-            (f'/posts/{post_id}/', 'posts/post_detail.html'),
+            (f'/posts/{cls.post_id}/', 'posts/post_detail.html'),
         )
         cls.registered_user_urls = (
             ('/create/', 'posts/create_post.html'),
-            (f'/posts/{post_id}/edit/', 'posts/create_post.html'),
+            (f'/posts/{cls.post_id}/edit/', 'posts/create_post.html'),
         )
 
     def setUp(self):

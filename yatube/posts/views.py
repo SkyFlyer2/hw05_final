@@ -31,11 +31,10 @@ def profile(request, username):
     user = get_object_or_404(User, username=username)
     post_list = user.posts.select_related('author', 'group')
     page_obj = page_list(post_list, request)
-    following = False
-    if request.user.is_authenticated:
-        follow = Follow.objects.filter(user=request.user, author=user)
-        if follow.exists():
-            following = True
+    following = (
+        request.user.is_authenticated
+        and Follow.objects.filter(user=request.user, author=user).exists()
+    )
     return render(request, 'posts/profile.html', {
         'author': user,
         'page_obj': page_obj,

@@ -360,23 +360,23 @@ class FollowServiceTest(TestCase):
             slug='test_slug',
             description='Тестовое описание'
         )
-        list_posts = [Post(
-            text=f'Новая запись от {cls.user} № {i}',
-            author=cls.user,
-            group=cls.group,
-        ) for i in range(4)]
-        Post.objects.bulk_create(list_posts)
-
-        list_posts = [Post(
-            text=f'Новая запись от {cls.user2} № {i}',
-            author=cls.user2,
-            group=cls.group,
-        ) for i in range(4)]
-        Post.objects.bulk_create(list_posts)
+        Post.objects.bulk_create(
+            [Post(
+                text=f'Новая запись от {cls.user} № {i}',
+                author=cls.user,
+                group=cls.group,
+            ) for i in range(4)])
+        Post.objects.bulk_create(
+            [Post(
+                text=f'Новая запись от {cls.user2} № {i}',
+                author=cls.user2,
+                group=cls.group,
+            ) for i in range(4)])
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def test_auth_user_can_follow_author(self):
         """
