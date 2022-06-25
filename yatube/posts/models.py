@@ -16,10 +16,11 @@ class Group(models.Model):
 class Post(models.Model):
     text = models.TextField(
         'Текст поста',
-        help_text='Введите текст поста')
+        verbose_name='Текст поста',
+        help_text='Текст нового поста')
     pub_date = models.DateTimeField(
         'Дата публикации',
-        auto_now_add=True
+        auto_now_add=True,
     )
     author = models.ForeignKey(
         User,
@@ -32,7 +33,7 @@ class Post(models.Model):
         on_delete=models.SET_NULL,
         related_name='posts',
         verbose_name='Группа',
-        help_text='Выберите группу'
+        help_text='Группа, к которой будет относиться пост'
     )
     image = models.ImageField(
         'Картинка',
@@ -89,6 +90,9 @@ class Follow(models.Model):
 
     class Meta:
         ordering = ['-id']
-        unique_together = ('user', 'author',)
+        models.UniqueConstraint(
+            fields=['user', 'author',],
+            name='user_and_author_uniq'
+        )
         verbose_name = 'Подписки'
         verbose_name_plural = 'Подписки'

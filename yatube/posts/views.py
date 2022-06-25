@@ -178,6 +178,7 @@ def profile_follow(request, username):
 def profile_unfollow(request, username):
     """отписка от автора"""
     followed = get_object_or_404(User, username=username)
-    if Follow.objects.filter(user=request.user, author=followed).exists():
-        Follow.objects.get(user=request.user, author=followed).delete()
+    qs = Follow.objects.filter(user=request.user, author=followed)
+    if qs.exists():
+        qs.delete()
     return redirect('posts:profile', username=username)
