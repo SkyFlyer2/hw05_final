@@ -61,13 +61,22 @@ def post_detail(request, post_id):
 def post_create(request):
     """добавление новой записи в базу. """
     form = PostForm(request.POST or None)
-    if request.method == 'POST':
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
-            return redirect('posts:profile', request.user.username)
-    return render(request, 'posts/create_post.html', {'form': form})
+    if not request.method == 'POST':
+        return render(request, 'posts/create_post.html', {'form': form})
+    if not form.is_valid():
+        return render(request, 'posts/create_post.html', {'form': form})
+    post = form.save(commit=False)
+    post.author = request.user
+    post.save()
+    return redirect('posts:profile', request.user.username)
+
+#    if request.method == 'POST':
+#        if form.is_valid():
+#            post = form.save(commit=False)
+#            post.author = request.user
+#            post.save()
+#            return redirect('posts:profile', request.user.username)
+#    return render(request, 'posts/create_post.html', {'form': form})
 
 
 @login_required
@@ -80,20 +89,51 @@ def post_edit(request, post_id):
         instance=post
     )
     if request.user != post.author:
-        return redirect('posts:post_detail', post_id)
-    if request.method == 'POST':
-        if form.is_valid():
-            form.save()
-            return redirect('posts:post_detail', post_id)
-    return render(
-        request,
-        'posts/create_post.html',
-        {
-            'form': form,
-            'is_edit': True,
-            'post_id': post_id
-        }
-    )
+        return render(
+            request,
+            'posts/create_post.html',
+            {
+                'form': form,
+                'is_edit': True,
+                'post_id': post_id
+            }
+        )
+    if not request.method == 'POST':
+        return render(
+            request,
+            'posts/create_post.html',
+            {
+                'form': form,
+                'is_edit': True,
+                'post_id': post_id
+            }
+        )
+    if not form.is_valid():
+        return render(
+            request,
+            'posts/create_post.html',
+            {
+                'form': form,
+                'is_edit': True,
+                'post_id': post_id
+            }
+        )
+    form.save()
+    return redirect('posts:post_detail', post_id)
+
+#    if request.method == 'POST':
+#        if form.is_valid():
+#            form.save()
+#            return redirect('posts:post_detail', post_id)
+#    return render(
+#        request,
+#        'posts/create_post.html',
+#        {
+#            'form': form,
+#            'is_edit': True,
+#            'post_id': post_id
+#        }
+#    )
 
 
 @login_required
@@ -119,18 +159,25 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     """Подписаться на автора"""
-    follower = request.user
-    followed = User.objects.get(username=username)
-    follower_exists = Follow.objects.filter(user=request.user, author=followed)
-    if follower != followed and not follower_exists.exists():
-        Follow.objects.create(user=request.user, author=followed)
+    author = get_object_or_404(User, username=username)
+    subscription = Follow.objects.filter(user=request.user, author=author)
+    if request.user == author or subscription.exists():
+        return redirect('posts:profile', username=username)
+    Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
+
+#    follower = request.user
+#    followed = User.objects.get(username=username)
+#    follower_exists = Follow.objects.filter(user=request.user, author=followed)
+#    if follower != followed and not follower_exists.exists():
+#        Follow.objects.create(user=request.user, author=followed)
+#    return redirect('posts:profile', username=username)
 
 
 @login_required
 def profile_unfollow(request, username):
     """отписка от автора"""
-    followed = User.objects.get(username=username)
+    followed = get_object_or_404(User, username=username)
     if Follow.objects.filter(user=request.user, author=followed).exists():
         Follow.objects.get(user=request.user, author=followed).delete()
     return redirect('posts:profile', username=username)
