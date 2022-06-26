@@ -85,8 +85,8 @@ class GroupPagesTests(TestCase):
         """Шаблон главной страницы с правильным контекстом"""
         response = self.authorized_client.get(reverse('posts:index'))
         first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.text, 'Отдельная запись')
-        self.assertTrue(first_object.image, 'posts/small.gif')
+        self.assertEqual(first_object.text, self.post.text)
+        self.assertEqual(first_object.image, 'posts/small.gif')
 
     def test_group_list_page_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
@@ -95,8 +95,8 @@ class GroupPagesTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}))
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.group.title, self.group.title)
-        self.assertEqual(first_object.text, 'Отдельная запись')
-        self.assertTrue(first_object.image, 'posts/small.gif')
+        self.assertEqual(first_object.text, self.post.text)
+        self.assertEqual(first_object.image, 'posts/small.gif')
 
     def test_profile_page_show_correct_context(self):
         """Страница профиля с правильным контекстом"""
@@ -106,7 +106,7 @@ class GroupPagesTests(TestCase):
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.text, self.post.text)
         self.assertEqual(first_object.author, self.user)
-        self.assertTrue(first_object.image, 'posts/small.gif')
+        self.assertEqual(first_object.image, 'posts/small.gif')
 
     def test_post_detail_page_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
@@ -114,8 +114,8 @@ class GroupPagesTests(TestCase):
         response = (self.authorized_client.get(
             reverse('posts:post_detail', kwargs={'post_id': 1})))
         object = response.context['post_detail']
-        self.assertEqual(object.text, 'Отдельная запись')
-        self.assertTrue(object.image, 'posts/small.gif')
+        self.assertEqual(object.text, self.post.text)
+        self.assertEqual(object.image, 'posts/small.gif')
 
     def test_post_edit_page_show_correct_context(self):
         """Шаблон post_edit сформирован с правильным контекстом."""
@@ -150,6 +150,23 @@ class GroupPagesTests(TestCase):
                 self.assertIsInstance(form_field, expected)
         self.assertIsInstance(response.context.get('form'), PostForm)
 
+    def check_post_context(self, response, expected):
+        #self.assertIn('post', response.context)
+        #response = response.context['post']
+        first_object = response.context['page_obj'][0]
+
+        post0 = (
+            (first_object.text, expected.text),
+            (first_object.group.title, expected.group.title),
+            (first_object.author, expected.author),
+        )
+        i=1
+        for value, expected_data in post0:
+            print(i)
+            print(value)
+            i += 1
+            self.assertEqual(value, expected_data)
+
 # дополнительная проверка при создании поста
     def test_post_on_main_page(self):
         """Проверяем что новая запись группы появилась на главной странице"""
@@ -164,8 +181,14 @@ class GroupPagesTests(TestCase):
             group=self.group2
         )
         response = self.authorized_client.get(reverse('posts:index'))
+        print('проверка группы')
+        print(self.post2.group)
+
         first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.text, 'Отдельная запись')
+
+        self.check_post_context(response, self.post2)
+
+        self.assertEqual(first_object.text, self.post2.text)
         self.assertEqual(first_object.group, self.group2)
 
     def test_post_second_group_list_page(self):
@@ -184,7 +207,9 @@ class GroupPagesTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'test_slug2'}))
         first_object = response.context['page_obj'][0]
         self.assertEqual(first_object.group.title, self.group2.title)
-        self.assertEqual(first_object.text, 'Отдельная запись')
+        self.assertEqual(first_object.text, self.post2.text)
+        
+        self.check_post_context(response, self.post2)
 
     def test_post_profile_page(self):
         """Проверяем что новая запись группы появилась в профиле

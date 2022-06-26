@@ -136,6 +136,6 @@ class PostCreateFormTests(TestCase):
             data=form_data,
             follow=True
         )
-#1 добавить проверку поста в базе
         self.assertRedirects(
             response_guest, f'/auth/login/?next=/posts/{self.post.id}/edit/')
+        self.assertEqual(Post.objects.count(), 1)
