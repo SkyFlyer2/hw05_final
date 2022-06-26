@@ -15,9 +15,9 @@ class Group(models.Model):
 
 class Post(models.Model):
     text = models.TextField(
-        'Текст поста',
         verbose_name='Текст поста',
-        help_text='Текст нового поста')
+        help_text='Текст нового поста',
+    )
     pub_date = models.DateTimeField(
         'Дата публикации',
         auto_now_add=True,
@@ -91,7 +91,7 @@ class Follow(models.Model):
     class Meta:
         ordering = ['-id']
         models.UniqueConstraint(
-            fields=['user', 'author',],
+            fields=['user', 'author', ],
             name='user_and_author_uniq'
         )
         verbose_name = 'Подписки'

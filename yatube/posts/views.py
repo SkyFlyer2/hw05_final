@@ -46,6 +46,7 @@ def post_detail(request, post_id):
     """подробная информация о записи. """
     post = get_object_or_404(Post, pk=post_id)
     form_comment = CommentForm(request.POST or None)
+    print(post.comments.text)
     comments = post.comments.all()
     return render(
         request,
@@ -69,14 +70,6 @@ def post_create(request):
     post.author = request.user
     post.save()
     return redirect('posts:profile', request.user.username)
-
-#    if request.method == 'POST':
-#        if form.is_valid():
-#            post = form.save(commit=False)
-#            post.author = request.user
-#            post.save()
-#            return redirect('posts:profile', request.user.username)
-#    return render(request, 'posts/create_post.html', {'form': form})
 
 
 @login_required
@@ -165,13 +158,6 @@ def profile_follow(request, username):
         return redirect('posts:profile', username=username)
     Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
-
-#    follower = request.user
-#    followed = User.objects.get(username=username)
-#    follower_exists = Follow.objects.filter(user=request.user, author=followed)
-#    if follower != followed and not follower_exists.exists():
-#        Follow.objects.create(user=request.user, author=followed)
-#    return redirect('posts:profile', username=username)
 
 
 @login_required
