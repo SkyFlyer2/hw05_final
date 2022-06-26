@@ -46,14 +46,11 @@ def post_detail(request, post_id):
     """подробная информация о записи. """
     post = get_object_or_404(Post, pk=post_id)
     form_comment = CommentForm(request.POST or None)
-    print(post.comments.text)
-    comments = post.comments.all()
     return render(
         request,
         'posts/post_detail.html',
         {'post_detail': post,
          'form': form_comment,
-         'comments': comments
          }
     )
 

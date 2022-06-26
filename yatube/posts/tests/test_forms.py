@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from django.conf import settings
+from http import HTTPStatus
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.cache import cache
 from posts.models import Post, Group
@@ -64,9 +65,10 @@ class PostCreateFormTests(TestCase):
         self.assertRedirects(response, reverse('posts:profile', kwargs={
             'username': 'testuser'}))
         self.assertEqual(Post.objects.count(), 1)
-        self.assertTrue(Post.objects.filter(group=self.group).exists())
-        self.assertTrue(Post.objects.filter(author=self.user).exists())
-        self.assertTrue(Post.objects.filter(text='Тестовый текст').exists())
+        post_new = Post.objects.get(id=1)
+        self.assertEqual(post_new.group, self.group)
+        self.assertEqual(post_new.author, self.user)
+        self.assertEqual(post_new.text, 'Тестовый текст')
         self.assertTrue(
             Post.objects.filter(
                 image__isnull=False,
@@ -92,13 +94,10 @@ class PostCreateFormTests(TestCase):
         )
         self.assertRedirects(response, reverse('posts:post_detail', kwargs={
             'post_id': self.post.id}))
-        self.assertTrue(
-            Post.objects.filter(
-                group=self.group,
-                author=self.user,
-                text='Тестовый текст после правки'
-            ).exists()
-        )
+        post_edit = Post.objects.get(id=self.post.id)
+        self.assertEqual(post_edit.author, self.user)
+        self.assertEqual(post_edit.text, 'Тестовый текст после правки')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_guest_cant_create_post(self):
         """Гость не может создать пост"""
