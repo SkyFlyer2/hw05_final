@@ -7,7 +7,7 @@
 
 Проект реализован на django 2.2.16, версия python 3.8.10.
 
-![Default Home View](__screenshots/main.png?raw=true "Title")
+![Default Home View](__screenshots/main.png?raw=true "Главная страница проекта")
 
 ### Основные возможности
 
