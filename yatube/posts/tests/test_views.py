@@ -29,7 +29,7 @@ class GroupPagesTests(TestCase):
             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
             b'\x0A\x00\x3B'
         )
-        uploaded = SimpleUploadedFile(
+        cls.uploaded = SimpleUploadedFile(
             name='small.gif',
             content=small_gif,
             content_type='image/gif'
@@ -45,7 +45,7 @@ class GroupPagesTests(TestCase):
             author=cls.user,
             text='Отдельная запись',
             group=cls.group,
-            image=uploaded,
+            image=cls.uploaded,
         )
 
     @classmethod
@@ -57,6 +57,18 @@ class GroupPagesTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         cache.clear()
+
+    def check_post_context(self, response, expected):
+        first_object = response.context['page_obj'][0]
+
+        template = (
+            (first_object.text, expected.text),
+            (first_object.group.title, expected.group.title),
+            (first_object.author, expected.author),
+            (first_object.image, expected.image),
+        )
+        for value, expected_data in template:
+            self.assertEqual(value, expected_data)
 
     # Проверяем используемые шаблоны
     def test_pages_uses_correct_template(self):
@@ -84,29 +96,21 @@ class GroupPagesTests(TestCase):
     def test_index_page_show_correct_context(self):
         """Шаблон главной страницы с правильным контекстом"""
         response = self.authorized_client.get(reverse('posts:index'))
-        first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.text, self.post.text)
-        self.assertEqual(first_object.image, 'posts/small.gif')
+        self.check_post_context(response, self.post)
 
     def test_group_list_page_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
 
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}))
-        first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.group.title, self.group.title)
-        self.assertEqual(first_object.text, self.post.text)
-        self.assertEqual(first_object.image, 'posts/small.gif')
+        self.check_post_context(response, self.post)
 
     def test_profile_page_show_correct_context(self):
         """Страница профиля с правильным контекстом"""
 
         response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': 'testuser'}))
-        first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.text, self.post.text)
-        self.assertEqual(first_object.author, self.user)
-        self.assertEqual(first_object.image, 'posts/small.gif')
+        self.check_post_context(response, self.post)
 
     def test_post_detail_page_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
@@ -150,23 +154,6 @@ class GroupPagesTests(TestCase):
                 self.assertIsInstance(form_field, expected)
         self.assertIsInstance(response.context.get('form'), PostForm)
 
-    def check_post_context(self, response, expected):
-        #self.assertIn('post', response.context)
-        #response = response.context['post']
-        first_object = response.context['page_obj'][0]
-
-        post0 = (
-            (first_object.text, expected.text),
-            (first_object.group.title, expected.group.title),
-            (first_object.author, expected.author),
-        )
-        i=1
-        for value, expected_data in post0:
-            print(i)
-            print(value)
-            i += 1
-            self.assertEqual(value, expected_data)
-
 # дополнительная проверка при создании поста
     def test_post_on_main_page(self):
         """Проверяем что новая запись группы появилась на главной странице"""
@@ -178,18 +165,11 @@ class GroupPagesTests(TestCase):
         self.post2 = Post.objects.create(
             author=self.user,
             text='Отдельная запись',
-            group=self.group2
+            group=self.group2,
+            image=self.uploaded,
         )
         response = self.authorized_client.get(reverse('posts:index'))
-        print('проверка группы')
-        print(self.post2.group)
-
-        first_object = response.context['page_obj'][0]
-
         self.check_post_context(response, self.post2)
-
-        self.assertEqual(first_object.text, self.post2.text)
-        self.assertEqual(first_object.group, self.group2)
 
     def test_post_second_group_list_page(self):
         """Проверяем что новая запись группы появилась на странице группы"""
@@ -201,14 +181,11 @@ class GroupPagesTests(TestCase):
         self.post2 = Post.objects.create(
             author=self.user,
             text='Отдельная запись',
-            group=self.group2
+            group=self.group2,
+            image=self.uploaded,
         )
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test_slug2'}))
-        first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.group.title, self.group2.title)
-        self.assertEqual(first_object.text, self.post2.text)
-        
         self.check_post_context(response, self.post2)
 
     def test_post_profile_page(self):
@@ -222,25 +199,22 @@ class GroupPagesTests(TestCase):
         self.post2 = Post.objects.create(
             author=self.user,
             text='Отдельная запись',
-            group=self.group2
+            group=self.group2,
+            image=self.uploaded,
         )
         response = self.authorized_client.get(
             reverse('posts:profile', kwargs={'username': 'testuser'}))
-        first_object = response.context['page_obj'][0]
-        self.assertEqual(first_object.text, self.post2.text)
-        self.assertEqual(first_object.author, self.user)
-        self.assertEqual(first_object.group, self.group2)
+        self.check_post_context(response, self.post2)
 
     # тестирование комментариев
     def test_registered_user_add_comment(self):
         """Комментировать пост может только зарегистрированный пользователь"""
         comment_text = {'text': 'Комментарий от auth-user'}
-        response = self.authorized_client.post(
+        self.authorized_client.post(
             reverse('posts:add_comment', kwargs={'post_id': self.post.id}),
             comment_text,
             follow=True
         )
-#        self.assertTrue(response.context.get('comments'))
         self.assertEqual(
             Comment.objects.get(post=self.post).text,
             comment_text['text']
@@ -275,19 +249,7 @@ class GroupPagesTests(TestCase):
                 kwargs={'post_id': 1}
             ),
         )
-
-#self.assertEqual(response.context.get(
-#            'comments')[0].text,
-#            form_data['text']
-#        )
-        print(response.context.get('post_detail').comments.all)
-        response.context.get('post_detail').comments.all
-        for i in response.context.get('post_detail').comments:
-            print(i)
-#        self.assertEqual(response.context.get(
-#            'comments')[0].text,
-#            form_data['text']
-#        )
+        self.assertIn(form_data['text'], response.content.decode())
 
 
 class PaginatorViewsTest(TestCase):
