@@ -3,10 +3,11 @@
 # Описание проекта
 
 Учебный проект "Социальная сеть Yatube"
+Автор: SkyFlyer, telegram: @skyflyer1
 
 Проект реализован на django 2.2.16, версия python 3.8.10.
 
-![Default Home View](__screenshots/home.png?raw=true "Title")
+![Главная страница проекта(__screenshots/main.png?raw=true "Title")
 
 ### Основные возможности
 

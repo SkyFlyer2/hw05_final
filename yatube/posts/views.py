@@ -111,20 +111,6 @@ def post_edit(request, post_id):
     form.save()
     return redirect('posts:post_detail', post_id)
 
-#    if request.method == 'POST':
-#        if form.is_valid():
-#            form.save()
-#            return redirect('posts:post_detail', post_id)
-#    return render(
-#        request,
-#        'posts/create_post.html',
-#        {
-#            'form': form,
-#            'is_edit': True,
-#            'post_id': post_id
-#        }
-#    )
-
 
 @login_required
 def add_comment(request, post_id):
