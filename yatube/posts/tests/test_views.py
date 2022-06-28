@@ -277,6 +277,10 @@ class PaginatorViewsTest(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'test_slug'}),
             reverse('posts:profile', kwargs={'username': 'testuser'}),
         }
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
         cache.clear()
 
     def test_first_page_contains_ten_records(self):
@@ -285,7 +289,7 @@ class PaginatorViewsTest(TestCase):
         num_posts_on_first_page = 10
         for reverse_name in self.list_template_names:
             with self.subTest(reverse_name=reverse_name):
-                response = self.client.get(reverse_name)
+                response = self.authorized_client.get(reverse_name)
                 self.assertEqual(
                     len(response.context['page_obj']),
                     num_posts_on_first_page
@@ -298,7 +302,7 @@ class PaginatorViewsTest(TestCase):
 
         for reverse_name in self.list_template_names:
             with self.subTest(reverse_name=reverse_name):
-                response = self.client.get(reverse_name + '?page=2')
+                response = self.authorized_client.get(reverse_name + '?page=2')
                 self.assertEqual(
                     len(response.context['page_obj']),
                     num_posts_on_second_page

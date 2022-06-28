@@ -137,17 +137,25 @@ def profile_follow(request, username):
     """Подписаться на автора"""
     author = get_object_or_404(User, username=username)
     subscription = Follow.objects.filter(user=request.user, author=author)
-    if request.user == author or subscription.exists():
-        return redirect('posts:profile', username=username)
-    Follow.objects.create(user=request.user, author=author)
+#    print(subscription.exists(), not subscription.exists())
+    if request.user != author or (subscription.exists() is False):
+        print('хуй тебе')
+        print(request.user != author)
+        print('>', request.user, '<', '>', author, '<')
+        print(subscription.exists() is False)
+        Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
+#    if request.user == author or subscription.exists():
+#        return redirect('posts:profile', username=username)
+#    Follow.objects.create(user=request.user, author=author)
+#    return redirect('posts:profile', username=username)
 
 
 @login_required
 def profile_unfollow(request, username):
     """отписка от автора"""
     followed = get_object_or_404(User, username=username)
-    qs = Follow.objects.filter(user=request.user, author=followed)
-    if qs.exists():
-        qs.delete()
+    follow_qs = Follow.objects.filter(user=request.user, author=followed)
+    if follow_qs.exists():
+        follow_qs.delete()
     return redirect('posts:profile', username=username)
