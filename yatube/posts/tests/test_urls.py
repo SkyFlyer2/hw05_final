@@ -23,16 +23,15 @@ class PostURLTests(TestCase):
             text='Тестовый текст, который не должен быть слишком коротким',
             group=cls.group
         )
-        cls.post_id = 1
         cls.guest_user_urls = (
             ('/', 'posts/index.html'),
             ('/group/test_slug/', 'posts/group_list.html'),
             ('/profile/testuser/', 'posts/profile.html'),
-            (f'/posts/{cls.post_id}/', 'posts/post_detail.html'),
+            (f'/posts/{cls.post.id}/', 'posts/post_detail.html'),
         )
         cls.registered_user_urls = (
             ('/create/', 'posts/create_post.html'),
-            (f'/posts/{cls.post_id}/edit/', 'posts/create_post.html'),
+            (f'/posts/{cls.post.id}/edit/', 'posts/create_post.html'),
         )
 
     def setUp(self):
@@ -55,8 +54,7 @@ class PostURLTests(TestCase):
 # Серия тестов для авторизованного пользователя
     def test_post_edit_url_exists_at_desired_location(self):
         """Страница /posts/<post_id>/edit доступна только автору."""
-        post_id = 1
-        url_edit = f'/posts/{post_id}/edit/'
+        url_edit = f'/posts/{self.post.id}/edit/'
         url_login = f'/auth/login/?next={url_edit}'
         response = self.guest_client.get(url_edit, follow=True)
         self.assertRedirects(response, url_login)
