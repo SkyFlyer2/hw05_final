@@ -59,9 +59,7 @@ def post_detail(request, post_id):
 def post_create(request):
     """добавление новой записи в базу. """
     form = PostForm(request.POST or None)
-    if not request.method == 'POST':
-        return render(request, 'posts/create_post.html', {'form': form})
-    if not form.is_valid():
+    if not request.method == 'POST' or not form.is_valid():
         return render(request, 'posts/create_post.html', {'form': form})
     post = form.save(commit=False)
     post.author = request.user
@@ -78,7 +76,11 @@ def post_edit(request, post_id):
         files=request.FILES or None,
         instance=post
     )
-    if request.user != post.author:
+    if (
+        request.user != post.author
+        or not request.method == 'POST'
+        or not form.is_valid()
+    ):
         return render(
             request,
             'posts/create_post.html',
@@ -86,27 +88,7 @@ def post_edit(request, post_id):
                 'form': form,
                 'is_edit': True,
                 'post_id': post_id
-            }
-        )
-    if not request.method == 'POST':
-        return render(
-            request,
-            'posts/create_post.html',
-            {
-                'form': form,
-                'is_edit': True,
-                'post_id': post_id
-            }
-        )
-    if not form.is_valid():
-        return render(
-            request,
-            'posts/create_post.html',
-            {
-                'form': form,
-                'is_edit': True,
-                'post_id': post_id
-            }
+            },
         )
     form.save()
     return redirect('posts:post_detail', post_id)
