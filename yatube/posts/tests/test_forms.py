@@ -115,7 +115,7 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), 0)
         self.assertRedirects(
             response_guest,
-            f'/auth/login/?next={url_create_post}'
+            f'{reverse("users:login")}?next={url_create_post}'
         )
 
     def test_guest_cant_edit_post(self):
@@ -137,5 +137,7 @@ class PostCreateFormTests(TestCase):
             follow=True
         )
         self.assertRedirects(
-            response_guest, f'/auth/login/?next=/posts/{self.post.id}/edit/')
+            response_guest,
+            f'{reverse("users:login")}?next=/posts/{self.post.id}/edit/'
+        )
         self.assertEqual(Post.objects.count(), 1)

@@ -414,7 +414,7 @@ class FollowServiceTest(TestCase):
             'posts:profile_follow',
             kwargs={'username': self.user2}
         )
-        url_login = f'/auth/login/?next={url_follow}'
+        url_login = f'{reverse("users:login")}?next={url_follow}'
         response = self.guest_client.get(url_follow)
         self.assertEqual(Follow.objects.count(), 0)
         # редирект на логин

@@ -1,5 +1,6 @@
 from http import HTTPStatus
 from django.core.cache import cache
+from django.urls import reverse
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from posts.models import Post, Group
@@ -55,14 +56,16 @@ class PostURLTests(TestCase):
     def test_post_edit_url_exists_at_desired_location(self):
         """Страница /posts/<post_id>/edit доступна только автору."""
         url_edit = f'/posts/{self.post.id}/edit/'
-        url_login = f'/auth/login/?next={url_edit}'
+        url_login = f'{reverse("users:login")}?next={url_edit}'
         response = self.guest_client.get(url_edit, follow=True)
         self.assertRedirects(response, url_login)
 
     def test_post_create_url_exists_at_desired_location(self):
         """Страница /create/ доступна авторизованному пользователю."""
         response = self.guest_client.get('/create/', follow=True)
-        self.assertRedirects(response, '/auth/login/?next=/create/')
+        self.assertRedirects(
+            response, f'{reverse("users:login")}?next=/create/'
+        )
 
     def test_home_url_uses_correct_template(self):
         """Страница по адресу / использует шаблон posts/index.html."""
