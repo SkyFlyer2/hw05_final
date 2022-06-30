@@ -136,8 +136,9 @@ class PostCreateFormTests(TestCase):
             data=form_data,
             follow=True
         )
+        url_edit = reverse("posts:post_edit", kwargs={"post_id": self.post.id})
         self.assertRedirects(
             response_guest,
-            f'{reverse("users:login")}?next=/posts/{self.post.id}/edit/'
+            f'{reverse("users:login")}?next={url_edit}'
         )
         self.assertEqual(Post.objects.count(), 1)

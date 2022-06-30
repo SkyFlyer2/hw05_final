@@ -76,19 +76,24 @@ def post_edit(request, post_id):
         files=request.FILES or None,
         instance=post
     )
-    if (
-        request.user != post.author
-        or not request.method == 'POST'
-        or not form.is_valid()
-    ):
+    context = {
+        'form': form,
+        'is_edit': True,
+        'post_id': post_id
+    }
+    if request.user != post.author:
+        return redirect('posts:post_detail', post_id)
+    if not request.method == 'POST':
         return render(
             request,
             'posts/create_post.html',
-            {
-                'form': form,
-                'is_edit': True,
-                'post_id': post_id
-            },
+            context,
+        )
+    if not form.is_valid():
+        return render(
+            request,
+            'posts/create_post.html',
+            context,
         )
     form.save()
     return redirect('posts:post_detail', post_id)
@@ -119,7 +124,7 @@ def profile_follow(request, username):
     """Подписаться на автора"""
     author = get_object_or_404(User, username=username)
     subscription = Follow.objects.filter(user=request.user, author=author)
-    if request.user != author and subscription.exists() is False:
+    if request.user != author and not subscription.exists():
         Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username=username)
 
