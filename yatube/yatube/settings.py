@@ -6,9 +6,10 @@ load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = str(os.getenv('SECRET_KEY'))
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
+    '158.160.4.20',
     'localhost',
     '127.0.0.1',
     '[::1]',
@@ -110,3 +111,7 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+
+STATIC_URL = '/static/' # префикс для url
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/') # папка, в которой будет лежать статика
+
