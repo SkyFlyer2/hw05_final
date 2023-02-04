@@ -1,6 +1,6 @@
 # Описание проекта
 
-###"Социальная сеть Yatube"
+### "Социальная сеть Yatube"
 
 Автор: SkyFlyer, telegram: @skyflyer1
 
